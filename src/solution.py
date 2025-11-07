@@ -25,11 +25,10 @@ class ops:
 def ops_rolling_regbeta(input_path: str, window: int = 20) -> np.ndarray:
     res = (
         pl.scan_parquet(input_path)
-        .select(["symbol", "Close", "Low"]) 
         .with_columns([
             pl.col("Close").cast(pl.Float64),
             pl.col("Low").cast(pl.Float64),
-            pl.col("symbol").cast(pl.Categorical)  # <-- 添加在这里
+            pl.col("symbol").cast(pl.Categorical) 
         ])
         .select(
             # 这里的 .over("symbol") 将会运行得更快

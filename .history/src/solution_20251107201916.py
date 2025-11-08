@@ -8,12 +8,17 @@ class ops:
             expr_x = pl.col(col_x_or_expr)
         else:
             expr_x = col_x_or_expr
+
         if isinstance(col_y_or_expr, str):
             expr_y = pl.col(col_y_or_expr)
         else:
             expr_y = col_y_or_expr
-        cov_xy = pl.rolling_cov(expr_x, expr_y, window_size=window, ddof=1, min_samples=2) # ddof=1
+    
+  
+        cov_xy = pl.rolling_cov(expr_x, expr_y, window_size=window, ddof=1, min_samples=2) 
         var_x = expr_x.rolling_var(window_size=window, ddof=1, min_samples=2)
+        
+        # 参数微调
         return pl.when(var_x < 1.02*1e-6).then(0.0).otherwise(cov_xy / var_x).alias("rolling_regbeta")
 
 
@@ -21,11 +26,13 @@ def ops_rolling_regbeta(input_path: str, window: int = 20) -> np.ndarray:
     res = (
         pl.scan_parquet(input_path)
         .with_columns([
-            pl.col("Close"),
-            pl.col("Low")
+            pl.col("Close").cast(pl.Float64),
+            pl.col("Low").cast(pl.Float64),
+            pl.col("symbol").cast(pl.Categorical)  # <-- 添加在这里
         ])
         .select(
+            # 这里的 .over("symbol") 将会运行得更快
             ops.rolling_regbeta("Low", "Close", window).over("symbol")
         )
-    ).collect()
+    ).collect(engine="streaming")
     return res.to_numpy()

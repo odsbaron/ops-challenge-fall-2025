@@ -14,7 +14,7 @@ class ops:
             expr_y = col_y_or_expr
         cov_xy = pl.rolling_cov(expr_x, expr_y, window_size=window, ddof=1, min_samples=2) # ddof=1
         var_x = expr_x.rolling_var(window_size=window, ddof=1, min_samples=2)
-        return pl.when(var_x < 1.02*1e-6).then(0.0).otherwise(cov_xy / var_x).alias("rolling_regbeta")
+        return pl.when(var_x < 1e-6).then(0.0).otherwise(cov_xy / var_x).alias("rolling_regbeta")
 
 
 def ops_rolling_regbeta(input_path: str, window: int = 20) -> np.ndarray:

@@ -1,12 +1,10 @@
 import polars as pl
 import numpy as np
-pl.Config.set_streaming_chunk_size(50_000_000)
 class ops:
     @staticmethod
     def rolling_regbeta(col_x_or_expr, col_y_or_expr, window: int) -> pl.Expr:
         expr_x = col_x_or_expr if isinstance(col_x_or_expr, pl.Expr) else pl.col(col_x_or_expr)
         expr_y = col_y_or_expr if isinstance(col_y_or_expr, pl.Expr) else pl.col(col_y_or_expr)
-
 
         cov_xy = pl.rolling_cov(expr_x, expr_y, window_size=window, ddof=1, min_samples=2) 
         var_x = expr_x.rolling_var(window_size=window, ddof=1, min_samples=2)
@@ -26,5 +24,5 @@ def ops_rolling_regbeta(input_path: str, window: int = 20) -> np.ndarray:
         .select(
             ops.rolling_regbeta("Low", "Close", window).over("symbol")
         )
-    ).collect(engine="streaming")
+    ).collect()
     return res.to_numpy()
